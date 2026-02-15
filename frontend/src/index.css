@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark Uber Theme */
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  --muted: #9ca3af;
+  --accent: #fbbf24;
+  --input: #1f1f1f;
+}
+
+/* utility mappings */
+.bg-background { background: var(--background); }
+.text-foreground { color: var(--foreground); }
+.text-muted-foreground { color: var(--muted); }
+.text-accent { color: var(--accent); }
+
+
+
+/* INPUT */
+.uber-input {
+  width: 100%;
+  height: 55px;
+  padding: 0 18px;
+  border-radius: 12px;
+  background: linear-gradient(90deg,#1f1f1f,#2a2a2a);
+  color: white;
+  font-size: 16px;
+  outline: none;
+  border: none;
+  transition: 0.2s;
+}
+
+.uber-input:focus {
+  box-shadow: 0 0 0 2px #fbbf24;
+}
+
+/* PRIMARY BUTTON */
+.uber-btn-primary {
+  width: 100%;
+  height: 55px;
+  border-radius: 12px;
+  background: #e5e5e5;
+  color: black;
+  font-weight: 600;
+  font-size: 18px;
+  transition: 0.2s;
+}
+
+.uber-btn-primary:hover {
+  background: white;
+}
+
+/* CAPTAIN BUTTON */
+.uber-btn-accent {
+  display: block;
+  width: 100%;
+  height: 55px;
+  border-radius: 12px;
+  background: #fbbf24;
+  color: black;
+  font-weight: 700;
+  font-size: 18px;
+  text-align: center;
+  line-height: 55px;
+  transition: 0.2s;
+}
+
+.uber-btn-accent:hover {
+  background: #f59e0b;
+}
+
+
