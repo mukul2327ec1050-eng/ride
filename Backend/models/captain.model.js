@@ -96,6 +96,6 @@ captainSchema.methods.hashPassword = async function (password) {
     return await bcrypt.hash(password, salt);
 }
 
-const captainModel = mongoose.model('Captain', captainSchema); 
+const captainModel = mongoose.model('captain', captainSchema); 
 
 module.exports = captainModel;

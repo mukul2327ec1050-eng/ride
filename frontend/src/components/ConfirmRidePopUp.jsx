@@ -22,20 +22,16 @@ const ConfirmRidePopUp = (props) => {
   const submitHander = async (e) => {
     e.preventDefault();
 
-    const response =  await axios.post('/api/captain/start-ride', {
-      rideId: ride._id,
-      otp: otp,
-    }, {    
+    const response =  await axios.get(`${import.meta.env.VITE_BASE_URL}/rides/start-ride?rideId=${ride._id}&otp=${otp}`, {    
         headers: {
             authorization: `Bearer ${localStorage.getItem('token')}`,
         },
     });
+    console.log('confirmRide response:', response);
     if(response.status === 200){
         setConfirmRidePopupPanel(false);
         setRidePopupPanel(false);
-
         navigate('/captain-riding');
-
     }
   }
 
@@ -88,7 +84,7 @@ const ConfirmRidePopUp = (props) => {
         </div>
 
         <div className="mt-6 w-full">
-          <form onSubmit={submitHander}>
+          <form >
             <input
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
@@ -98,16 +94,13 @@ const ConfirmRidePopUp = (props) => {
             />
 
             {/* ⛔ LINK NOT CHANGED */}
-            <Link
-              to="/captain-riding"
-              onClick={() => {
-                setConfirmRidePopupPanel(true)
-                setRidePopupPanel(false)
-              }}
+            <button
+              type="button"
+              onClick={(e) => submitHander(e)}
               className="bg-green-600 w-full flex justify-center text-white text-lg font-semibold p-2 px-10 rounded-lg"
             >
               Start
-            </Link>
+            </button>
 
             <button
               type="button"

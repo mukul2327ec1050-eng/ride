@@ -54,10 +54,13 @@ const Start = () => {
 
     const onRideStarted = (rideData) => {
       setWaitingForDriver(false);
+      console.log("✅ Ride started! Navigating to /riding", rideData);
+      alert("Ride started! Navigating to your ride screen.");
       navigate("/riding", { state: { ride: rideData } });
     };
 
     socket.current?.on("waiting-for-driver", onWaiting);
+    // ✅ Confirmed: Backend emits 'ride-started' (see ride.controller.js > startRide)
     socket.current?.on("ride-started", onRideStarted);
 
     return () => {
