@@ -33,11 +33,28 @@ const UserProtectWrapper = ({
             })
     }, [ token ])
 
+    // loading animation 
     if (isLoading) {
-        return (
-            <div>Loading...</div>
-        )
-    }
+    return (
+        <div className="h-screen w-screen flex items-center justify-center bg-gray-50">
+            <div className="flex flex-col items-center gap-6">
+
+                {/* Spinner */}
+                <div className="relative h-16 w-16">
+                    <div className="absolute inset-0 rounded-full border-4 border-gray-300"></div>
+                    <div className="absolute inset-0 rounded-full border-4 border-black border-t-transparent animate-spin"></div>
+                </div>
+
+                {/* Text */}
+                <p className="text-gray-600 font-medium tracking-wide">
+                    Checking session...
+                </p>
+
+            </div>
+        </div>
+    )
+}
+
 
     return (
         <>

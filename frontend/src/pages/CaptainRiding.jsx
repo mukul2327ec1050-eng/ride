@@ -113,11 +113,18 @@ const CaptainRiding = () => {
 
             {/* SLIDE PANEL */}
             <div
-                ref={finishRidePanelRef}
-                className='fixed left-0 bottom-0 w-full z-[500] translate-y-full bg-white px-3 py-10 pt-12'
-            >
-                <FinishRide setFinishRidePanel={setFinishRidePanel} />
-            </div>
+  ref={finishRidePanelRef}
+  className="fixed left-0 bottom-0 w-full z-[500] translate-y-full
+             bg-[#111111] text-white
+             px-5 pt-6 pb-8
+             rounded-t-[28px]
+             border-t border-white/10
+             shadow-[0_-10px_40px_rgba(0,0,0,0.85)]
+             backdrop-blur-xl"
+>
+    <FinishRide setFinishRidePanel={setFinishRidePanel} ride={rideData} />
+</div>
+
 
         </div>
     )

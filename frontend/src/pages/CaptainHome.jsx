@@ -24,7 +24,8 @@ const CaptainHome = () => {
   const { socket } = useContext(SocketContext)
   const { captain } = useContext(CaptainDataContext)
 
-  // SOCKET JOIN + RIDE LISTENER + LOCATION UPDATES
+  /* ---------------- SOCKET ---------------- */
+
   useEffect(() => {
     if (!captain || !socket?.current) return
 
@@ -67,47 +68,38 @@ const CaptainHome = () => {
     }
   }, [captain, socket])
 
-  // 🔥 IMPORTANT CHANGE HERE
-
+  /* ---------------- CONFIRM RIDE ---------------- */
 
   async function confirmRide(otp) {
-  if (!ride || !captain) return
+    if (!ride || !captain) return
 
-  try {
-    // 🚀 IMPORTANT: capture backend response
-    const res = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/rides/confirm`,
-      { rideId: ride._id, captainId: captain._id, otp },
-      { headers: { authorization: `Bearer ${localStorage.getItem('token')}` } }
-    )
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/rides/confirm`,
+        { rideId: ride._id, captainId: captain._id, otp },
+        { headers: { authorization: `Bearer ${localStorage.getItem('token')}` } }
+      )
 
-    const confirmedRide = res.data   // <-- THIS IS THE REAL RIDE WITH COORDINATES
+      const confirmedRide = res.data
 
-    // notify user
-    if (socket?.current) {
-      socket.current.emit('ride-confirmed-by-captain', {
-        rideId: confirmedRide._id,
-        userId: confirmedRide?.user?._id || confirmedRide?.userId
+      if (socket?.current) {
+        socket.current.emit('ride-confirmed-by-captain', {
+          rideId: confirmedRide._id,
+          userId: confirmedRide?.user?._id || confirmedRide?.userId
+        })
+      }
+
+      setRidePopupPanel(false)
+      setConfirmRidePopupPanel(false)
+
+      navigate('/captain-riding', {
+        state: { ride: confirmedRide }
       })
+
+    } catch (err) {
+      console.error('confirmRide error:', err)
     }
-
-    setRidePopupPanel(false)
-    setConfirmRidePopupPanel(false)
-
-    // 🚀 NOW NAVIGATE WITH FULL RIDE
-    navigate('/captain-riding', {
-      state: { ride: confirmedRide }
-    })
-
-  } catch (err) {
-    console.error('confirmRide error:', err)
   }
-}
-
-
-
-
-
 
   function handleAccept(selectedRide = ride) {
     if (!selectedRide || !captain || !socket?.current) return
@@ -126,7 +118,8 @@ const CaptainHome = () => {
     setConfirmRidePopupPanel(true)
   }
 
-  // GSAP
+  /* ---------------- GSAP ---------------- */
+
   useGSAP(() => {
     gsap.to(ridePopupPanelRef.current, {
       transform: ridePopupPanel ? 'translateY(0%)' : 'translateY(100%)',
@@ -140,28 +133,56 @@ const CaptainHome = () => {
   }, [confirmRidePopupPanel])
 
   return (
-    <div className="h-screen w-screen relative overflow-hidden">
+    <div className="h-screen w-screen relative overflow-hidden bg-black text-white">
 
-      {/* MAP BACKGROUND */}
+      {/* MAP */}
       <div className="absolute inset-0 z-0">
         <LiveTracking />
       </div>
 
+      {/* GRADIENT */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/90 z-10 pointer-events-none" />
+
       {/* HEADER */}
-      <div className="absolute p-6 top-0 flex items-center justify-between w-full z-20">
-        <img className="w-16" src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png" alt="" />
-        <Link to="/captain-home" className="h-10 w-10 bg-white flex items-center justify-center rounded-full">
-          <i className="text-lg font-medium ri-logout-box-r-line"></i>
+      <div className="absolute p-6 top-0 flex items-center justify-between w-full z-30">
+        <div className="flex items-center gap-3">
+          <div className="h-6 w-[3px] bg-white/70 rounded-full"></div>
+          <span className="text-2xl font-bold tracking-tight z-10">AaoChale</span>
+        </div>
+
+        <Link
+          to="/captain-home"
+          className="h-10 w-10 bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center rounded-full hover:bg-white/20 transition"
+        >
+          <i className="text-lg ri-logout-box-r-line"></i>
         </Link>
       </div>
 
-      {/* BOTTOM DETAILS PANEL */}
-      <div className="absolute bottom-0 w-full p-6 z-10">
-        <CaptainDetails />
-      </div>
+      {/* CAPTAIN INFO CARD (FIXED VISIBILITY) */}
+      <div className="absolute bottom-6 w-full px-6 z-30">
+  <div className="
+      bg-[#111111]/95 
+      backdrop-blur-xl 
+      border border-white/10 
+      rounded-2xl 
+      shadow-[0_10px_40px_rgba(0,0,0,0.9)]
+      text-white
+      [&_*]:text-white
+      [&_svg]:text-white
+  ">
+    <CaptainDetails />
+  </div>
+</div>
 
-      {/* Ride Popup */}
-      <div ref={ridePopupPanelRef} className="fixed w-full z-30 bottom-0 translate-y-full bg-white px-3 py-10 pt-12">
+
+      {/* RIDE POPUP */}
+      <div
+        ref={ridePopupPanelRef}
+        className="fixed w-full z-40 bottom-0 translate-y-full
+                   bg-[#111111] text-black px-5 pt-6 pb-8
+                   rounded-t-[28px] border-t border-white/10
+                   shadow-[0_-10px_40px_rgba(0,0,0,0.85)] backdrop-blur-xl"
+      >
         <RidePopUp
           ride={ride}
           setRidePopupPanel={setRidePopupPanel}
@@ -171,8 +192,14 @@ const CaptainHome = () => {
         />
       </div>
 
-      {/* Confirm Ride Popup */}
-      <div ref={confirmRidePopupPanelRef} className="fixed w-full h-screen z-40 bottom-0 translate-y-full bg-white px-3 py-10 pt-12">
+      {/* CONFIRM POPUP */}
+      <div
+        ref={confirmRidePopupPanelRef}
+        className="fixed w-full h-screen z-50 bottom-0 translate-y-full
+                   bg-[#111111] text-white px-5 pt-6 pb-8
+                   rounded-t-[28px] border-t border-white/10
+                   shadow-[0_-10px_40px_rgba(0,0,0,0.85)] backdrop-blur-xl"
+      >
         <ConfirmRidePopUp
           ride={ride}
           confirmRide={confirmRide}

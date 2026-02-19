@@ -71,7 +71,8 @@ module.exports.createRide = async ({ userId, pickup, destination, vehicleType })
     throw new Error("Could not find coordinates");
   }
 
-  // 2️⃣ Fare calculation
+  // 2️⃣ Distance, duration, and fare calculation
+  const distanceTime = await mapService.getDistanceTime(pickup, destination);
   const fare = await getFare(pickup, destination, vehicleType);
 
   // 3️⃣ Generate OTP
@@ -80,19 +81,18 @@ module.exports.createRide = async ({ userId, pickup, destination, vehicleType })
   // 4️⃣ Save in CORRECT schema structure
   const ride = await rideModel.create({
     user: userId,
-
     pickup: {
       address: pickup,
       coordinates: [pickupCoords.lng, pickupCoords.lat],
     },
-
     destination: {
       address: destination,
       coordinates: [destinationCoords.lng, destinationCoords.lat],
     },
-
     fare: fare[vehicleType],
     otp,
+    distance: distanceTime.distance, // meters
+    duration: distanceTime.duration, // seconds
   });
 
   return ride;

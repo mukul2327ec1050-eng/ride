@@ -47,15 +47,20 @@ const Start = () => {
     }
 
     const onWaiting = (rideData) => {
-      setRide(rideData);
-      setWaitingForDriver(true);
-      socket.current.emit("join-ride-room", { rideId: rideData._id });
-    };
+  setRide(rideData);
+
+  setVehicleFound(false);      // 🔴 CLOSE previous panel
+  setConfirmRidePanel(false);  // safety
+  setWaitingForDriver(true);
+
+  socket.current.emit("join-ride-room", { rideId: rideData._id });
+};
+
 
     const onRideStarted = (rideData) => {
       setWaitingForDriver(false);
       console.log("✅ Ride started! Navigating to /riding", rideData);
-      alert("Ride started! Navigating to your ride screen.");
+      // alert("Ride started! Navigating to your ride screen.");
       navigate("/riding", { state: { ride: rideData } });
     };
 
@@ -166,7 +171,7 @@ const Start = () => {
           <div className="relative mt-5 space-y-3">
             {/* CURVED ROUTE VISUAL */}
             <svg
-              className="absolute left-3 top-3 h-[88px] w-10 pointer-events-none"
+              className="absolute right-6 top-6 h-[88px] w-10 pointer-events-none"
               viewBox="0 0 40 100"
               fill="none"
             >
@@ -226,9 +231,21 @@ const Start = () => {
         <ConfirmedRide vehicleType={vehicleType} fare={fare} pickup={pickup} destination={destination} createRide={createRide} setConfirmRidePanel={setConfirmRidePanel} setVehicleFound={setVehicleFound} />
       </div>
 
-      <div ref={vehicleFoundRef} className="fixed z-20 w-full bottom-0 px-4 pt-5 pb-7 bg-[#111111] rounded-t-[28px]">
-        <LookingForDriver vehicleType={vehicleType} fare={fare} pickup={pickup} destination={destination} setVehicleFound={setVehicleFound} setConfirmRidePanel={setConfirmRidePanel} />
-      </div>
+      <div
+  ref={vehicleFoundRef}
+  className="fixed z-20 w-full bottom-0 px-4 pt-5 pb-7 bg-[#111111] rounded-t-[28px]"
+>
+  <LookingForDriver
+    vehicleType={vehicleType}
+    ride={ride}
+    fare={fare}
+    pickup={pickup}
+    destination={destination}
+    setVehicleFound={setVehicleFound}
+    setConfirmRidePanel={setConfirmRidePanel}
+  />
+</div>
+
 
       <div ref={WaitingForDriverRef} className="fixed z-20 w-full bottom-0 px-4 pt-5 pb-7 bg-[#111111] rounded-t-[28px]">
         <WaitingForDriver ride={ride} setVehicleFound={setVehicleFound} setWaitingForDriver={setWaitingForDriver} waitingForDriver={waitingForDriver} />

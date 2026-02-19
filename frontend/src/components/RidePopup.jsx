@@ -3,58 +3,111 @@ import React from 'react'
 
 const RidePopUp = (props) => {
     return (
-        <div>
-            <h5 className='p-1 text-center w-[93%] absolute top-0'><i className="text-3xl text-gray-200 ri-arrow-down-wide-line"></i></h5>
-            <h3 className='text-2xl font-semibold mb-5'>New Ride Available!</h3>
-            <div className='flex items-center justify-between p-3 bg-yellow-400 rounded-lg mt-4'>
-                <div className='flex items-center gap-3 '>
-                    <img className='h-12 rounded-full object-cover w-12' src="data:image/jpeg;base64,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" alt="" />
-                    <h2 className='text-lg font-medium'>{props.ride?.user.fullname.firstname}</h2>
-                </div>
-                <h5 className='text-lg font-semibold'>2.2 KM</h5>
-            </div>
-            <div className='flex gap-2 justify-between flex-col items-center'>
-                <div className='w-full mt-5'>
-                    <div className='flex items-center gap-5 p-3 border-b-2'>
-                        <i className="ri-map-pin-user-fill"></i>
-                        <div>
-                            <h3 className='text-lg font-medium'>562/11-A</h3>
-                            <p className='text-sm -mt-1 text-gray-600'>{props.ride?.pickup?.address}</p>
-                        </div>
-                    </div>
-                    <div className='flex items-center gap-5 p-3 border-b-2'>
-                        <i className="text-lg ri-map-pin-2-fill"></i>
-                        <div>
-                            <h3 className='text-lg font-medium'>562/11-A</h3>
-                            <p className='text-sm -mt-1 text-gray-600'>{props.ride?.destination?.address}</p>
-                        </div>
-                    </div>
-                    <div className='flex items-center gap-5 p-3'>
-                        <i className="ri-currency-line"></i>
-                        <div>
-                            <h3 className='text-lg font-medium'>₹{props.ride?.fare}</h3>
-                            <p className='text-sm -mt-1 text-gray-600'>Cash</p>
-                        </div>
-                    </div>
-                </div>
-                <div className='mt-5 w-full flex items-center justify-between gap-4 '>
-                    <button onClick={() => {
-                        props.setConfirmRidePopupPanel(true)
-                        props.setRidePopupPanel(false)
+  <div className="text-white">
 
-                         if (props.onAccept) props.onAccept(props.ride)
+    {/* drag handle */}
+    <h5 className='p-1 text-center w-[93%] absolute top-0'>
+      <i className="text-3xl text-white/70 ri-arrow-down-wide-line"></i>
+    </h5>
 
-                    }} className=' bg-green-600 w-full text-white font-semibold p-3 px-8 rounded-lg'>Accept</button>
+    <h3 className='text-2xl font-semibold mb-5 mt-3'>New Ride Available!</h3>
 
-                    <button onClick={() => {
-                        props.setRidePopupPanel(false)
-                    }} className=' w-full bg-gray-300 text-gray-700 font-semibold p-3 px-8 rounded-lg'>Ignore</button>
+    {/* USER CARD */}
+    {/* USER CARD */}
+<div className='flex items-center justify-between p-3 bg-white/10 border border-white/10 rounded-xl mt-4 backdrop-blur-md'>
+
+  <div className='flex items-center gap-3'>
+
+    {/* USER PHOTO OR FALLBACK */}
+    {props.ride?.user?.profileImage || props.ride?.user?.photo || props.ride?.user?.avatar ? (
+      <img
+        className='h-12 w-12 rounded-full object-cover border border-white/20'
+        src={
+          props.ride?.user?.profileImage ||
+          props.ride?.user?.photo ||
+          props.ride?.user?.avatar
+        }
+        alt="user"
+      />
+    ) : (
+      <div className='h-12 w-12 rounded-full bg-white/20 flex items-center justify-center text-lg font-semibold border border-white/20'>
+        {props.ride?.user?.fullname?.firstname?.charAt(0)?.toUpperCase() || "U"}
+      </div>
+    )}
+
+    <div>
+      <h2 className='text-lg font-medium text-white'>
+        {props.ride?.user?.fullname?.firstname || "Rider"}
+      </h2>
+      <p className='text-xs text-gray-400'>Passenger</p>
+    </div>
+
+  </div>
+
+  <h5 className='text-lg font-semibold text-green-400'>{Math.floor(props.ride?.distance/1000) + " Km" || "0.0 KM"}</h5>
+
+</div>
 
 
-                </div>
-            </div>
+    {/* DETAILS */}
+    <div className='flex gap-2 flex-col items-center'>
+      <div className='w-full mt-5'>
+
+        {/* PICKUP */}
+        <div className='flex items-center gap-5 p-3 border-b border-white/10'>
+          <i className="ri-map-pin-user-fill text-green-400 text-xl"></i>
+          <div>
+            <h3 className='text-lg font-medium text-white'>Pickup</h3>
+            <p className='text-sm -mt-1 text-gray-400'>{props.ride?.pickup?.address}</p>
+          </div>
         </div>
-    )
+
+        {/* DESTINATION */}
+        <div className='flex items-center gap-5 p-3 border-b border-white/10'>
+          <i className="ri-map-pin-2-fill text-red-400 text-xl"></i>
+          <div>
+            <h3 className='text-lg font-medium text-white'>Destination</h3>
+            <p className='text-sm -mt-1 text-gray-400'>{props.ride?.destination?.address}</p>
+          </div>
+        </div>
+
+        {/* FARE */}
+        <div className='flex items-center gap-5 p-3'>
+          <i className="ri-currency-line text-xl text-white"></i>
+          <div>
+            <h3 className='text-lg font-medium text-white'>₹{props.ride?.fare}</h3>
+            <p className='text-sm -mt-1 text-gray-400'>Cash</p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* BUTTONS */}
+      <div className='mt-5 w-full flex items-center justify-between gap-4'>
+
+        <button
+          onClick={() => {
+            props.setConfirmRidePopupPanel(true)
+            props.setRidePopupPanel(false)
+            if (props.onAccept) props.onAccept(props.ride)
+          }}
+          className='bg-green-600 hover:bg-green-500 w-full text-white font-semibold p-3 rounded-xl transition'
+        >
+          Accept
+        </button>
+
+        <button
+          onClick={() => props.setRidePopupPanel(false)}
+          className='w-full bg-white/10 border border-white/15 text-white font-semibold p-3 rounded-xl hover:bg-white/20 transition'
+        >
+          Ignore
+        </button>
+
+      </div>
+    </div>
+  </div>
+)
+
 }
 
 export default RidePopUp
