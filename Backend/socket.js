@@ -5,6 +5,9 @@ const rideModel = require("./models/ride.model");
 
 let io;
 
+/* ===================================================
+   INITIALIZE SOCKET
+=================================================== */
 const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
@@ -43,7 +46,7 @@ const initializeSocket = (server) => {
           });
         }
 
-        console.log(`✅ ${userType} ${userId} joined`);
+        console.log(`✅ ${userType} joined → ${userId}`);
       } catch (err) {
         console.error("❌ join error:", err);
       }
@@ -54,18 +57,20 @@ const initializeSocket = (server) => {
     =================================================== */
     socket.on("join-ride-room", ({ rideId }) => {
       if (!rideId) return;
-      socket.join(`ride_${rideId}`);
-      console.log(`🔔 Joined room ride_${rideId}`);
+
+      const room = `ride_${rideId}`;
+      socket.join(room);
+
+      console.log(`🔔 ${socket.id} joined ${room}`);
     });
 
     /* ===================================================
-       CAPTAIN ACCEPTED RIDE  ⭐ FIXED
+       CAPTAIN ACCEPTED RIDE
     =================================================== */
     socket.on("captain-accepted", async ({ rideId, captainId }) => {
       try {
         if (!rideId || !captainId) return;
 
-        // ✅ SAVE CAPTAIN INTO RIDE
         const ride = await rideModel
           .findByIdAndUpdate(
             rideId,
@@ -98,16 +103,23 @@ const initializeSocket = (server) => {
     });
 
     /* ===================================================
-       RIDE CONFIRMED
+       ⭐ RIDE CONFIRMED (OTP FIX INCLUDED)
     =================================================== */
     socket.on("ride-confirmed-by-captain", async ({ rideId }) => {
       try {
+        if (!rideId) return;
+
+        // ⭐ FIX → include OTP
         const ride = await rideModel
           .findById(rideId)
+          .select("+otp")
           .populate("user captain")
           .lean();
 
-        if (!ride) return;
+        if (!ride) {
+          console.warn("⚠️ Ride not found");
+          return;
+        }
 
         const user = await userModel
           .findById(ride.user._id)
@@ -115,9 +127,11 @@ const initializeSocket = (server) => {
 
         if (user?.socketId) {
           io.to(user.socketId).emit("ride-confirmed", ride);
+        } else {
+          io.to(`ride_${rideId}`).emit("ride-confirmed", ride);
         }
 
-        console.log("📨 ride-confirmed sent");
+        console.log("📨 ride-confirmed sent with OTP:", ride.otp);
       } catch (err) {
         console.error("❌ ride-confirmed error:", err);
       }
@@ -132,9 +146,13 @@ const initializeSocket = (server) => {
         try {
           if (
             typeof lat !== "number" ||
-            typeof lng !== "number"
-          )
+            typeof lng !== "number" ||
+            lat < -90 || lat > 90 ||
+            lng < -180 || lng > 180
+          ) {
+            console.warn("⚠️ Invalid coordinates");
             return;
+          }
 
           await captainModel.findByIdAndUpdate(userId, {
             location: {
@@ -145,13 +163,14 @@ const initializeSocket = (server) => {
           });
 
           if (rideId) {
-            io.to(`ride_${rideId}`).emit(
-              "captain-location-update",
-              { lat, lng }
-            );
+            const room = `ride_${rideId}`;
 
+            io.to(room).emit("captain-location-update", { lat, lng });
+
+            // send back to captain too
             socket.emit("captain-location-update", { lat, lng });
           }
+
         } catch (err) {
           console.error("❌ location update error:", err);
         }
@@ -159,7 +178,7 @@ const initializeSocket = (server) => {
     );
 
     /* ===================================================
-       DISCONNECT CLEANUP ⭐ FIXED
+       DISCONNECT CLEANUP
     =================================================== */
     socket.on("disconnect", async () => {
       console.log(`❌ Disconnected: ${socket.id}`);
@@ -175,23 +194,28 @@ const initializeSocket = (server) => {
         if (socket.userType === "captain") {
           await captainModel.updateOne(
             { socketId: socket.id },
-            { socketId: null, status: "offline" }
+            {
+              socketId: null,
+              status: "offline",
+            }
           );
         }
 
         console.log("🧹 Socket cleaned");
       } catch (err) {
-        console.error("disconnect cleanup error:", err);
+        console.error("❌ disconnect cleanup error:", err);
       }
     });
   });
 };
 
 /* ===================================================
-   GLOBAL EMITTER
+   GLOBAL SOCKET EMITTER
 =================================================== */
 const sendMessageToSocketId = (socketId, event, payload) => {
   if (!io || !socketId) return;
+
+  console.log(`📨 ${event} → ${socketId}`);
   io.to(socketId).emit(event, payload);
 };
 
