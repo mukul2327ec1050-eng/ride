@@ -10,11 +10,15 @@ let io;
  */
 const initializeSocket = (server) => {
   io = new Server(server, {
-    cors: {
-      origin: "https://8dx31940-5173.inc1.devtunnels.ms",
-      methods: ['GET', 'POST'],
-    },
-  });
+  cors: {
+    origin: [
+      "http://localhost:5173",
+      "https://aao-chale.vercel.app"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
 
   io.on('connection', (socket) => {
     console.log(`⚡ Socket connected: ${socket.id}`);

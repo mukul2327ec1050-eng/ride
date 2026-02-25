@@ -9,7 +9,7 @@ const SocketProvider = ({ children }) => {
   useEffect(() => {
     // prevent multiple connections (React StrictMode fix)
     if (!socket.current) {
-      socket.current = io("https://8dx31940-5000.inc1.devtunnels.ms", {
+      socket.current = io(import.meta.env.VITE_BASE_URL, {
         transports: ["websocket"],
         withCredentials: true,
         reconnection: true,
