@@ -18,7 +18,7 @@ app.use(cookieParser());
 app.use(cors({
   origin: [
         "https://8dx31940-5173.inc1.devtunnels.ms",
-        "https://8dx31940-4000.inc1.devtunnels.ms",
+        "https://8dx31940-5000.inc1.devtunnels.ms",
     ],
   methods: ["GET", "POST"],
   credentials: true
