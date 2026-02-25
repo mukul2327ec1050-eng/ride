@@ -1,220 +1,205 @@
-const { Server } = require("socket.io");
-const userModel = require("./models/user.model");
-const captainModel = require("./models/captain.model");
-const rideModel = require("./models/ride.model");
+const { Server } = require('socket.io');
+const userModel = require('./models/user.model');
+const captainModel = require('./models/captain.model');
+const rideModel = require('./models/ride.model');
 
 let io;
 
-/* ===================================================
-   INITIALIZE SOCKET
-=================================================== */
+/**
+ * Initialize Socket.IO
+ */
 const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: [
-        "http://localhost:5173",
-        "https://aao-chale.vercel.app",
-      ],
-      methods: ["GET", "POST"],
-      credentials: true,
+      origin: "https://8dx31940-5173.inc1.devtunnels.ms",
+      methods: ['GET', 'POST'],
     },
   });
 
-  io.on("connection", (socket) => {
+  io.on('connection', (socket) => {
     console.log(`⚡ Socket connected: ${socket.id}`);
 
-    /* ===================================================
-       JOIN USER / CAPTAIN
-    =================================================== */
-    socket.on("join", async ({ userId, userType }) => {
+    // ============================
+    // JOIN (USER / CAPTAIN)
+    // ============================
+    socket.on('join', async ({ userId, userType }) => {
       try {
         if (!userId || !userType) return;
 
-        socket.userId = userId;
-        socket.userType = userType;
-
-        if (userType === "user") {
-          await userModel.findByIdAndUpdate(userId, {
-            socketId: socket.id,
-          });
+        if (userType === 'user') {
+          await userModel.findByIdAndUpdate(userId, { socketId: socket.id });
         }
 
-        if (userType === "captain") {
-          await captainModel.findByIdAndUpdate(userId, {
-            socketId: socket.id,
-            status: "active",
-          });
+        if (userType === 'captain') {
+          await captainModel.findByIdAndUpdate(userId, { socketId: socket.id });
         }
 
-        console.log(`✅ ${userType} joined → ${userId}`);
+        console.log(`✅ ${userType} ${userId} joined with socket ${socket.id}`);
       } catch (err) {
-        console.error("❌ join error:", err);
+        console.error('❌ join error:', err);
       }
     });
 
-    /* ===================================================
-       JOIN RIDE ROOM
-    =================================================== */
-    socket.on("join-ride-room", ({ rideId }) => {
+    // ============================
+    // JOIN RIDE ROOM (fallback)
+    // ============================
+    socket.on('join-ride-room', ({ rideId }) => {
       if (!rideId) return;
-
-      const room = `ride_${rideId}`;
-      socket.join(room);
-
-      console.log(`🔔 ${socket.id} joined ${room}`);
+      const roomName = `ride_${rideId}`;
+      socket.join(roomName);
+      console.log(`🔔 ${socket.id} joined room ${roomName}`);
     });
 
-    /* ===================================================
-       CAPTAIN ACCEPTED RIDE
-    =================================================== */
-    socket.on("captain-accepted", async ({ rideId, captainId }) => {
+    // ============================
+    // CAPTAIN ACCEPTED RIDE
+    // ============================
+    socket.on('captain-accepted', async ({ rideId, userId }) => {
       try {
-        if (!rideId || !captainId) return;
+        if (!rideId || !userId) return;
 
-        const ride = await rideModel
-          .findByIdAndUpdate(
-            rideId,
-            {
-              captain: captainId,
-              status: "accepted",
-            },
-            { new: true }
-          )
-          .populate("user captain");
-
-        if (!ride) {
-          console.warn("⚠️ Ride not found");
-          return;
-        }
-
-        const user = await userModel
-          .findById(ride.user._id)
-          .select("socketId");
-
-        if (user?.socketId) {
-          io.to(user.socketId).emit("waiting-for-driver", ride);
-          console.log("📨 waiting-for-driver → user");
-        }
-
-        console.log("✅ Captain assigned to ride");
-      } catch (err) {
-        console.error("❌ captain-accepted error:", err);
-      }
-    });
-
-    /* ===================================================
-       ⭐ RIDE CONFIRMED (OTP FIX INCLUDED)
-    =================================================== */
-    socket.on("ride-confirmed-by-captain", async ({ rideId }) => {
-      try {
-        if (!rideId) return;
-
-        // ⭐ FIX → include OTP
         const ride = await rideModel
           .findById(rideId)
-          .select("+otp")
-          .populate("user captain")
-          .lean();
+          .select('+otp')
+          .populate('user captain');
 
         if (!ride) {
-          console.warn("⚠️ Ride not found");
+          console.warn('⚠️ Ride not found');
           return;
         }
 
-        const user = await userModel
-          .findById(ride.user._id)
-          .select("socketId");
+        const user = await userModel.findById(userId).select('socketId');
 
         if (user?.socketId) {
-          io.to(user.socketId).emit("ride-confirmed", ride);
+          io.to(user.socketId).emit('waiting-for-driver', ride);
+          console.log('📨 waiting-for-driver → user');
         } else {
-          io.to(`ride_${rideId}`).emit("ride-confirmed", ride);
+          io.to(`ride_${rideId}`).emit('waiting-for-driver', ride);
+          console.log('📨 waiting-for-driver → room fallback');
         }
-
-        console.log("📨 ride-confirmed sent with OTP:", ride.otp);
       } catch (err) {
-        console.error("❌ ride-confirmed error:", err);
+        console.error('❌ captain-accepted error:', err);
       }
     });
 
-    /* ===================================================
-       CAPTAIN LOCATION UPDATE
-    =================================================== */
-    socket.on(
-      "captain-location-update",
-      async ({ userId, lat, lng, rideId }) => {
-        try {
-          if (
-            typeof lat !== "number" ||
-            typeof lng !== "number" ||
-            lat < -90 || lat > 90 ||
-            lng < -180 || lng > 180
-          ) {
-            console.warn("⚠️ Invalid coordinates");
-            return;
-          }
+    // ============================
+    // RIDE CONFIRMED BY CAPTAIN
+    // ============================
+    // ============================
+// RIDE CONFIRMED BY CAPTAIN
+// ============================
+socket.on('ride-confirmed-by-captain', async ({ rideId, userId }) => {
+  try {
+    if (!rideId) return;
 
-          await captainModel.findByIdAndUpdate(userId, {
-            location: {
-              type: "Point",
-              coordinates: [lng, lat],
-            },
-            status: "active",
-          });
+    // 🔥 FETCH FULL RIDE WITH COORDINATES
+    const fullRide = await rideModel
+      .findById(rideId)
+      .populate('user captain')
+      .lean();
 
-          if (rideId) {
-            const room = `ride_${rideId}`;
+    if (!fullRide) {
+      console.warn('⚠️ Ride not found while confirming');
+      return;
+    }
 
-            io.to(room).emit("captain-location-update", { lat, lng });
+    // get user socket
+    const user = await userModel.findById(fullRide.user._id).select('socketId');
 
-            // send back to captain too
-            socket.emit("captain-location-update", { lat, lng });
-          }
+    // 🚀 SEND FULL RIDE (NOT JUST ID)
+    if (user?.socketId) {
+      io.to(user.socketId).emit('ride-confirmed', fullRide);
+      console.log('📨 ride-confirmed → user (FULL RIDE SENT)');
+    } else {
+      io.to(`ride_${rideId}`).emit('ride-confirmed', fullRide);
+      console.log('📨 ride-confirmed → room fallback (FULL RIDE SENT)');
+    }
 
-        } catch (err) {
-          console.error("❌ location update error:", err);
-        }
-      }
-    );
+  } catch (err) {
+    console.error('❌ ride-confirmed error:', err);
+  }
+});
 
-    /* ===================================================
-       DISCONNECT CLEANUP
-    =================================================== */
-    socket.on("disconnect", async () => {
-      console.log(`❌ Disconnected: ${socket.id}`);
+
+    // ============================
+    // CAPTAIN LOCATION UPDATE
+    // ============================
+    // ============================
+// CAPTAIN LOCATION UPDATE
+// ============================
+socket.on('captain-location-update', async ({ userId, userType, lat, lng, rideId }) => {
+
+  if (
+    typeof lat !== 'number' ||
+    typeof lng !== 'number' ||
+    lat < -90 || lat > 90 ||
+    lng < -180 || lng > 180
+  ) {
+    console.warn('⚠️ Invalid location data');
+    return;
+  }
+
+  try {
+
+    // 1️⃣ Update DB (your original logic preserved)
+    if (userType === 'captain') {
+      await captainModel.findByIdAndUpdate(userId, {
+        location: {
+          type: 'Point',
+          coordinates: [lng, lat], // lng first
+        },
+        status: 'active',
+      });
+    }
+
+    // 2️⃣ Emit live location to ride room (for passenger map)
+    // 2️⃣ Emit live location to ride room + captain himself
+
+
+    
+if (rideId) {
+  io.to(`ride_${rideId}`).emit('captain-location-update', { lat, lng });
+
+  // CRITICAL: send back to captain so map can render
+  socket.emit('captain-location-update', { lat, lng });
+
+} else {
+  io.emit('captain-location-update', { lat, lng });
+}
+
+
+
+
+
+  } catch (err) {
+    console.error('❌ location update error:', err);
+  }
+});
+
+
+    // ============================
+    // DISCONNECT → CLEAN SOCKET ID
+    // ============================
+    socket.on('disconnect', async () => {
+      console.log(`❌ Socket disconnected: ${socket.id}`);
 
       try {
-        if (socket.userType === "user") {
-          await userModel.updateOne(
-            { socketId: socket.id },
-            { socketId: null }
-          );
-        }
-
-        if (socket.userType === "captain") {
-          await captainModel.updateOne(
-            { socketId: socket.id },
-            {
-              socketId: null,
-              status: "offline",
-            }
-          );
-        }
-
-        console.log("🧹 Socket cleaned");
+        await userModel.updateOne({ socketId: socket.id }, { socketId: null });
+        await captainModel.updateOne({ socketId: socket.id }, { socketId: null });
+        console.log('🧹 Cleared socketId from DB');
       } catch (err) {
-        console.error("❌ disconnect cleanup error:", err);
+        console.error('❌ disconnect cleanup error:', err);
       }
     });
   });
 };
 
-/* ===================================================
-   GLOBAL SOCKET EMITTER
-=================================================== */
+/**
+ * Emit event directly to a socketId
+ * Used from controllers (start-ride, cancel, etc.)
+ */
 const sendMessageToSocketId = (socketId, event, payload) => {
   if (!io || !socketId) return;
-
+  console.log(`🚀 Sending message to socketId ${socketId}`);
   console.log(`📨 ${event} → ${socketId}`);
   io.to(socketId).emit(event, payload);
 };
@@ -224,3 +209,4 @@ module.exports = {
   sendMessageToSocketId,
   getIO: () => io,
 };
+
