@@ -36,7 +36,10 @@ module.exports.createRide = async (req, res) => {
     );
     console.log("🚕 Captains in radius:", captainsInRadius);
 
-    ride.otp = ""; // Hide OTP in response
+      // Only hide OTP for captains, but send to user who booked the ride
+      // If you want to hide for captains, check req.user or req.captain
+      // For now, send OTP in response for user
+      ride.otp = ride.otp; // Include OTP in response for user
 
     const rideWithUser = await rideModel.findById(ride._id).populate("user");
 
@@ -47,7 +50,7 @@ module.exports.createRide = async (req, res) => {
     });
 
     res.status(201).json({
-      ride,
+        ride, // includes OTP for user
       pickupCoords,
       captainsInRadius,
     });
